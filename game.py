@@ -42,8 +42,35 @@ class App:
         self.player_angle_speed = 4
 
         self.player_angle = np.array([0, 0, 0], 'float64')
-
+        self.player_angle_global = np.array([0, 0, 0], 'float64')
         self.player_pos = np.array([0, 0, 0], 'float64')
+
+        self.points = []
+        colors = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+        color_i = -1
+
+        for x in range(-8, 16, 8):
+            for y in range(-8, 16, 8):
+                for z in range(-8, 16, 8):
+                    color_i = (color_i+1) % len(colors)
+                    color = colors[color_i]
+
+                    self.points.extend([
+                        ([x+0, y+0, z+0], color),
+                        ([x+1, y+0, z+0], color),
+                        ([x+1, y+1, z+0], color),
+                        ([x+0, y+1, z+0], color),
+                        ([x+0, y+0, z+1], color),
+                        ([x+1, y+0, z+1], color),
+                        ([x+1, y+1, z+1], color),
+                        ([x+0, y+1, z+1], color),
+                    ])
+
+        self.points = sorted(
+            self.points,
+            key=lambda p: np.sqrt((p[0][0]-self.player_pos[0])**2 + (p[0][1]-self.player_pos[1])**2 + (p[0][2]-self.player_pos[2])),
+        )
+
 
         pyxel.init(self.screen_width, self.screen_height, title="3D game", capture_scale=4)
         pyxel.run(self.update, self.draw)
@@ -53,7 +80,7 @@ class App:
         if pyxel.btnp(pyxel.KEY_Q):
             pyxel.quit()
 
-        player_ang_rad = np.deg2rad(self.player_angle)
+        player_ang_rad = np.deg2rad(self.player_angle_global)
 
         if pyxel.btn(pyxel.KEY_W):
             self.player_pos += np.array([
@@ -98,59 +125,25 @@ class App:
         self.player_angle[1] = np.clip(self.player_angle[1], -90, 90)
 
         # print(self.player_pos, self.player_angle)
+        yaw_rad = np.deg2rad(self.player_angle[2])
+
+        self.player_angle_global = (
+            self.player_angle[1] * -np.sin(yaw_rad),
+            self.player_angle[1] * np.cos(yaw_rad),
+            self.player_angle[2],
+        )
+        
+        rotmat = rotation_matrix(self.player_angle)
+
+        # print(self.player_angle, rotmat @ )
 
 
     def draw(self):
         pyxel.cls(0)
 
-        yaw_rad = np.deg2rad(self.player_angle[2])
+        rotmat = rotation_matrix(self.player_angle_global)
 
-        global_angle = (
-            self.player_angle[1] * -np.sin(yaw_rad),
-            self.player_angle[1] * np.cos(yaw_rad),
-            self.player_angle[2],
-        )
-
-        print(global_angle, yaw_rad)
-
-        rotmat = rotation_matrix(global_angle)
-
-        points = np.array([
-            [0, 0, 0],
-            [1, 0, 0],
-            [1, 1, 0],
-            [0, 1, 0],
-            [0, 0, 1],
-            [1, 0, 1],
-            [1, 1, 1],
-            [0, 1, 1],
-            [0+4, 0, 0],
-            [1+4, 0, 0],
-            [1+4, 1, 0],
-            [0+4, 1, 0],
-            [0+4, 0, 1],
-            [1+4, 0, 1],
-            [1+4, 1, 1],
-            [0+4, 1, 1],
-            [0, 1+4, 1],
-            [0, 0+4, 0],
-            [1, 0+4, 0],
-            [1, 1+4, 0],
-            [0, 1+4, 0],
-            [0, 0+4, 1],
-            [1, 0+4, 1],
-            [1, 1+4, 1],
-            [0+4, 1+4, 1],
-            [0+4, 0+4, 0],
-            [1+4, 0+4, 0],
-            [1+4, 1+4, 0],
-            [0+4, 1+4, 0],
-            [0+4, 0+4, 1],
-            [1+4, 0+4, 1],
-            [1+4, 1+4, 1],
-        ])
-
-        for point in points:
+        for point, color in self.points:
             rel = (point - self.player_pos) @ rotmat
 
             yaw = np.arctan2(rel[1], rel[0]) / np.pi * 180
@@ -163,7 +156,26 @@ class App:
             screen_y = pitch/self.fov * self.screen_height + self.screen_height/2
 
             if np.abs(yaw) < max_yaw and np.abs(pitch) < max_pitch:
-                pyxel.pset(screen_x, screen_y, 10)
+                pyxel.pset(screen_x, screen_y, color)
 
-App()
+# App()
 
+a = ["a", "B", "apple"]
+
+def prettify(a):
+    return ", ".join(a[:-1]) + (", and " if len(a) > 1 else "") + (a[-1] if len(a) else "")
+
+print(prettify([]))
+print(prettify(["apple"]))
+print(prettify(["apple", "agurk"]))
+print(prettify(["apple", "agurk", "pik"]))
+
+# def range(n):
+#     x = 0
+#     while x<n:
+#         yield x
+#         x += 1
+
+# numbers = range(10)
+
+# print(numbers)
