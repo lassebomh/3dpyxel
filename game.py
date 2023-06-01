@@ -35,8 +35,8 @@ class App:
 
         self.fov = 90
 
-        self.screen_width = 64
-        self.screen_height = 64
+        self.screen_width = 128
+        self.screen_height = 128
 
         self.player_mov_speed = 0.1
         self.player_angle_speed = 4
@@ -158,24 +158,4 @@ class App:
             if np.abs(yaw) < max_yaw and np.abs(pitch) < max_pitch:
                 pyxel.pset(screen_x, screen_y, color)
 
-# App()
-
-a = ["a", "B", "apple"]
-
-def prettify(a):
-    return ", ".join(a[:-1]) + (", and " if len(a) > 1 else "") + (a[-1] if len(a) else "")
-
-print(prettify([]))
-print(prettify(["apple"]))
-print(prettify(["apple", "agurk"]))
-print(prettify(["apple", "agurk", "pik"]))
-
-# def range(n):
-#     x = 0
-#     while x<n:
-#         yield x
-#         x += 1
-
-# numbers = range(10)
-
-# print(numbers)
+App()
