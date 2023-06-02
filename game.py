@@ -80,14 +80,31 @@ class App:
         if pyxel.btnp(pyxel.KEY_Q):
             pyxel.quit()
 
-        player_ang_rad = np.deg2rad(self.player_angle_global)
+
+        if pyxel.btn(pyxel.KEY_LEFT):
+            self.player_angle -= np.array([0, 0, self.player_angle_speed])
+
+        if pyxel.btn(pyxel.KEY_RIGHT):
+            self.player_angle += np.array([0, 0, self.player_angle_speed])
+
+        if pyxel.btn(pyxel.KEY_UP):
+            self.player_angle += np.array([0, self.player_angle_speed, 0])
+
+        if pyxel.btn(pyxel.KEY_DOWN):
+            self.player_angle -= np.array([0, self.player_angle_speed, 0])
+
+        self.player_angle[1] = np.clip(self.player_angle[1], -90, 90)
+
+        player_ang_rad = np.deg2rad(self.player_angle) * np.array([1, 1, 1])
+
+        self.player_rotmat = rotation_matrix((0, 0, self.player_angle[2])) @ rotation_matrix((0, self.player_angle[1], 0))
+
+        # print(player_ang_rad)
+
+        print(np.array([1, 0, 0]) @ self.player_rotmat * self.player_mov_speed)
 
         if pyxel.btn(pyxel.KEY_W):
-            self.player_pos += np.array([
-                np.cos(player_ang_rad[2]),
-                np.sin(player_ang_rad[2]),
-                np.sin(player_ang_rad[1]),
-            ]) * self.player_mov_speed
+            self.player_pos += (np.array([-1, 0, 0]) @ self.player_rotmat * self.player_mov_speed) * np.array([-1, 1, 1])
 
         if pyxel.btn(pyxel.KEY_S):
             self.player_pos -= np.array([
@@ -110,41 +127,14 @@ class App:
                 0,
             ]) * self.player_mov_speed
 
-        if pyxel.btn(pyxel.KEY_LEFT):
-            self.player_angle -= np.array([0, 0, self.player_angle_speed])
-
-        if pyxel.btn(pyxel.KEY_RIGHT):
-            self.player_angle += np.array([0, 0, self.player_angle_speed])
-
-        if pyxel.btn(pyxel.KEY_UP):
-            self.player_angle += np.array([0, self.player_angle_speed, 0])
-
-        if pyxel.btn(pyxel.KEY_DOWN):
-            self.player_angle -= np.array([0, self.player_angle_speed, 0])
-
-        self.player_angle[1] = np.clip(self.player_angle[1], -90, 90)
-
-        # print(self.player_pos, self.player_angle)
-        yaw_rad = np.deg2rad(self.player_angle[2])
-
-        self.player_angle_global = (
-            self.player_angle[1] * -np.sin(yaw_rad),
-            self.player_angle[1] * np.cos(yaw_rad),
-            self.player_angle[2],
-        )
-        
-        rotmat = rotation_matrix(self.player_angle)
-
-        # print(self.player_angle, rotmat @ )
-
 
     def draw(self):
         pyxel.cls(0)
 
-        rotmat = rotation_matrix(self.player_angle_global)
+        
 
         for point, color in self.points:
-            rel = (point - self.player_pos) @ rotmat
+            rel = (point - self.player_pos) @ self.player_rotmat
 
             yaw = np.arctan2(rel[1], rel[0]) / np.pi * 180
             pitch = np.arctan2(rel[2], np.sqrt(rel[1]**2 + rel[0]**2)) / np.pi * 180
